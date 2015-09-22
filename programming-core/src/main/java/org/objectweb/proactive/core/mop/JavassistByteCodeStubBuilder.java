@@ -99,7 +99,7 @@ public class JavassistByteCodeStubBuilder {
                 ClassPool pool = getClassPool();
                 generatedCtClass = pool.makeClass(Utils.convertClassNameToStubClassName(className,
                         genericParameters));
-                generatedCtClass.getClassFile().setMajorVersion(ClassFile.JAVA_6);
+                generatedCtClass.getClassFile().setMajorVersion(ClassFile.JAVA_8);
 
                 CtClass superCtClass = null;
                 try {
