@@ -49,6 +49,7 @@ import java.util.Map;
 import org.objectweb.proactive.api.PAFuture;
 import org.objectweb.proactive.core.exceptions.ExceptionHandler;
 import org.objectweb.proactive.core.mop.MethodCallInfo.SynchronousReason;
+import org.objectweb.proactive.core.util.converter.MakeDeepCopy;
 import org.objectweb.proactive.core.util.converter.ObjectToByteConverter;
 import org.objectweb.proactive.core.util.converter.ProActiveByteToObjectConverter;
 import org.objectweb.proactive.core.util.log.Loggers;
@@ -77,7 +78,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
     static Logger logger = ProActiveLogger.getLogger(Loggers.MOP);
 
     /**
-     *        The size of the pool we use for recycling MethodCall objects.
+     * The size of the pool we use for recycling MethodCall objects.
      */
     private static int RECYCLE_POOL_SIZE = 30;
 
@@ -91,7 +92,9 @@ public class MethodCall implements java.io.Serializable, Cloneable {
      */
     private static int index;
 
-    /**        Indicates if the recycling of MethodCall object is on. */
+    /**
+     * Indicates if the recycling of MethodCall object is on.
+     */
     private static boolean recycleMethodCallObject;
     private static java.util.Hashtable<String, Method> reifiedMethodsTable = new java.util.Hashtable<String, Method>();
 
@@ -131,7 +134,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
 
     /**
      * transform the effectiveArguments into a byte[]
-     * */
+     */
     public void transformEffectiveArgumentsIntoByteArray() {
         if ((this.serializedEffectiveArguments == null) && (this.effectiveArguments != null)) {
             try {
@@ -149,7 +152,8 @@ public class MethodCall implements java.io.Serializable, Cloneable {
      * Sets recycling of MethodCall objects on/off. Note that turning the recycling
      * off and on again results in the recycling pool being flushed, thus damaging
      * performances.
-     * @param value        sets the recycling on if <code>true</code>, otherwise turns it off.
+     *
+     * @param value sets the recycling on if <code>true</code>, otherwise turns it off.
      */
     public static synchronized void setRecycleMethodCallObject(boolean value) {
         if (recycleMethodCallObject == value) {
@@ -172,24 +176,24 @@ public class MethodCall implements java.io.Serializable, Cloneable {
     /**
      * Indicates if the recycling of MethodCall objects is currently running or not.
      *
-     * @return                        <code>true</code> if recycling is on, <code>false</code> otherwise
+     * @return <code>true</code> if recycling is on, <code>false</code> otherwise
      */
     public static synchronized boolean getRecycleMethodCallObject() {
         return MethodCall.recycleMethodCallObject;
     }
 
     /**
-     *        Factory method for getting MethodCall objects
+     * Factory method for getting MethodCall objects
      *
-     *        @param reifiedMethod a <code>Method</code> object that represents
-     *        the method whose invocation is reified
-     *        @param effectiveArguments   the effective arguments of the call. Arguments
-     *        that are of primitive type need to be wrapped
-     *         within an instance of the corresponding wrapper
-     *  class (like <code>java.lang.Integer</code> for
-     *  primitive type <code>int</code> for example).
-     *        @return        a MethodCall object representing an invocation of method
-     *        <code>reifiedMethod</code> with arguments <code>effectiveArguments</code>
+     * @param reifiedMethod      a <code>Method</code> object that represents
+     *                           the method whose invocation is reified
+     * @param effectiveArguments the effective arguments of the call. Arguments
+     *                           that are of primitive type need to be wrapped
+     *                           within an instance of the corresponding wrapper
+     *                           class (like <code>java.lang.Integer</code> for
+     *                           primitive type <code>int</code> for example).
+     * @return a MethodCall object representing an invocation of method
+     * <code>reifiedMethod</code> with arguments <code>effectiveArguments</code>
      */
     public synchronized static MethodCall getMethodCall(Method reifiedMethod,
             Map<TypeVariable<?>, Class<?>> genericTypesMapping, Object[] effectiveArguments,
@@ -224,9 +228,9 @@ public class MethodCall implements java.io.Serializable, Cloneable {
     }
 
     /**
-     *        Tells the recycling process that the MethodCall object passed as parameter
-     *        is ready for recycling. It is the responsibility of the caller of this
-     *        method to make sure that this object can safely be disposed of.
+     * Tells the recycling process that the MethodCall object passed as parameter
+     * is ready for recycling. It is the responsibility of the caller of this
+     * method to make sure that this object can safely be disposed of.
      */
     public synchronized static void setMethodCall(MethodCall mc) {
         if (MethodCall.getRecycleMethodCallObject()) {
@@ -291,6 +295,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
      * Fields of the object are not copied.
      * Please, consider use the factory method  <code>getMethodCall</code>
      * instead of build a new MethodCall object.
+     *
      * @return a shallow copy of this
      */
     public MethodCall getShallowCopy() {
@@ -305,19 +310,19 @@ public class MethodCall implements java.io.Serializable, Cloneable {
     }
 
     /**
-     *        Executes the instance method call represented by this object.
+     * Executes the instance method call represented by this object.
      *
-     * @param targetObject        the Object the method is called on
-     * @throws MethodCallExecutionFailedException thrown if the reflection of the
-     * call failed.
-     * @throws InvocationTargetException thrown if the execution of the reified
-     * method terminates abruptly by throwing an exception. The exception
-     * thrown by the execution of the reified method is placed inside the
-     * InvocationTargetException object.
+     * @param targetObject the Object the method is called on
      * @return the result of the invocation of the method. If the method returns
      * <code>void</code>, then <code>null</code> is returned. If the method
      * returned a primitive type, then it is wrapped inside the appropriate
      * wrapper object.
+     * @throws MethodCallExecutionFailedException thrown if the reflection of the
+     *                                            call failed.
+     * @throws InvocationTargetException          thrown if the execution of the reified
+     *                                            method terminates abruptly by throwing an exception. The exception
+     *                                            thrown by the execution of the reified method is placed inside the
+     *                                            InvocationTargetException object.
      */
     public Object execute(Object targetObject) throws InvocationTargetException,
             MethodCallExecutionFailedException {
@@ -347,17 +352,70 @@ public class MethodCall implements java.io.Serializable, Cloneable {
 
         try {
             targetObject = PAFuture.getFutureValue(targetObject);
+        } catch (Throwable t) {
+            throw new MethodCallExecutionFailedException(
+                "Exception while getting future value for targetObject", t);
+        }
+
+        try {
             // In order to call from this class protected methods of the Active Object,
-            // we need to bypass the Java Runtime security. 
+            // we need to bypass the Java Runtime security.
             this.reifiedMethod.setAccessible(true);
+        } catch (Throwable t) {
+            throw new MethodCallExecutionFailedException(
+                "Exception while setting accessibility on reified method", t);
+        }
+
+        try {
             return this.reifiedMethod.invoke(targetObject, this.effectiveArguments);
         } catch (IllegalAccessException e) {
-            throw new MethodCallExecutionFailedException("Access rights to the method denied: " + e);
+            throw new MethodCallExecutionFailedException("Access rights to the method denied: " + e, e);
         } catch (IllegalArgumentException e) {
-            throw new MethodCallExecutionFailedException("Arguments for the method " + this.getName() +
-                " are invalids: " + e + "for the object " + targetObject + "(" +
-                targetObject.getClass().getName() + ")", e);
+            StringBuilder trace = new StringBuilder();
+
+            trace.append("Trying to invoke ");
+            trace.append(this.getName());
+            trace.append(" on targetObject ");
+            trace.append(targetObject);
+            trace.append('[');
+            trace.append(getClassAndClassloader(targetObject));
+            trace.append(']');
+
+            if (effectiveArguments != null && effectiveArguments.length > 0) {
+                trace.append(" using following arguments ");
+
+                for (int i = 0; i < effectiveArguments.length; i++) {
+                    trace.append(effectiveArguments[i]);
+                    trace.append('[');
+                    trace.append(getClassAndClassloader(effectiveArguments[i]));
+                    trace.append(']');
+
+                    if (i < effectiveArguments.length - 1) {
+                        trace.append(", ");
+                    }
+                }
+            }
+
+            throw new MethodCallExecutionFailedException(trace.toString(), e);
         }
+    }
+
+    private String getClassAndClassloader(Object obj) {
+        Class<?> clazz = obj.getClass();
+
+        StringBuilder buf = new StringBuilder();
+
+        ClassLoader classLoader = clazz.getClassLoader();
+
+        if (classLoader != null) {
+            while (classLoader.getParent() != null &&
+                (((classLoader = classLoader.getParent()) != null) || classLoader != classLoader.getParent())) {
+                buf.append(classLoader.toString() + " ");
+            }
+        }
+
+        return clazz.getCanonicalName() + "(Classloader:" + clazz.getClassLoader() + ", parent=" +
+            buf.toString() + ")";
     }
 
     @Override
@@ -371,6 +429,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
 
     /**
      * Returns the name of the method
+     *
      * @return the name of the method
      */
     public String getName() {
@@ -518,6 +577,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
      * <LI>having <code>void</code> as return type
      * <LI>and not throwing any checked exceptions</UL>. If the caller asks
      * for a RuntimeException, then the call is not one way.
+     *
      * @return true if and only if the method call is one way
      */
     public boolean isOneWayCall() {
@@ -608,11 +668,12 @@ public class MethodCall implements java.io.Serializable, Cloneable {
      * Checks if the <code>Call</code> object can be
      * processed with a future semantics, i-e if its returned object
      * can be a future object.
-     *
+     * <p>
      * Two conditions must be met : <UL>
      * <LI> The returned object is reifiable
      * <LI> The invoked method does not throw any exceptions or they are catched asynchronously
      * </UL>
+     *
      * @return true if and only if the method call is asynchronous
      */
     public boolean isAsynchronousWayCall() {
@@ -621,6 +682,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
 
     /**
      * Set the tags for barrier to the method call (by copy)
+     *
      * @param barrierTags the list of tags
      */
     public void setBarrierTags(LinkedList<String> barrierTags) {
@@ -633,6 +695,7 @@ public class MethodCall implements java.io.Serializable, Cloneable {
 
     /**
      * Get the tags for barrier to the method call (by copy)
+     *
      * @return the list of barrier tags
      */
     public LinkedList<String> getBarrierTags() {
