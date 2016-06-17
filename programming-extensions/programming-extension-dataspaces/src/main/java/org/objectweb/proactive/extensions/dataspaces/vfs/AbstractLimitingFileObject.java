@@ -36,6 +36,7 @@
  */
 package org.objectweb.proactive.extensions.dataspaces.vfs;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.cert.Certificate;
@@ -292,9 +293,6 @@ public abstract class AbstractLimitingFileObject<T extends FileObject> extends D
         }
 
         public FileObject getFile() {
-            // FIXME: depends on VFS-259, fixed in VFS fork
-            // for vanilla VFS it would break some down-casting in providers implementations
-            // (see HttpFileContentInfoFactory and WebdavFileContentInfoFactory).
             return decorateFile(content.getFile());
         }
 
@@ -332,6 +330,30 @@ public abstract class AbstractLimitingFileObject<T extends FileObject> extends D
 
         public boolean isOpen() {
             return content.isOpen();
+        }
+
+        @Override
+        public long write(FileContent output) throws IOException {
+            checkIsNotReadOnly();
+            return content.write(output);
+        }
+
+        @Override
+        public long write(FileObject file) throws IOException {
+            checkIsNotReadOnly();
+            return content.write(file);
+        }
+
+        @Override
+        public long write(OutputStream output) throws IOException {
+            checkIsNotReadOnly();
+            return content.write(output);
+        }
+
+        @Override
+        public long write(OutputStream output, int bufferSize) throws IOException {
+            checkIsNotReadOnly();
+            return content.write(output, bufferSize);
         }
 
         public void removeAttribute(String attrName) throws FileSystemException {

@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -601,30 +602,15 @@ public class VFSFileObjectAdapter implements DataSpacesFileObject {
         if (!dsfo.isWritable()) {
             return false;
         }
-        File file = null;
+
         try {
-            file = convertDataSpaceToFileIfPossible(dsfo);
+            File file = convertDataSpaceToFileIfPossible(dsfo);
+            return Files.isWritable(file.toPath());
         } catch (URISyntaxException e) {
             throw new FileSystemException(e);
         } catch (DataSpacesException e) {
             throw new FileSystemException(e);
         }
-        if (file != null) {
-            boolean answer = file.canWrite();
-            if (!answer) {
-                return false;
-            }
-            // in some cases the canWrite method is not accurate, we try to create a file to check real write permission
-            File tryFile = new File(file, "testWrite.ack");
-            try {
-                tryFile.createNewFile();
-            } catch (IOException e) {
-                return false;
-            }
-            tryFile.delete();
-            return true;
-        }
-        return true;
     }
 
     private static File convertDataSpaceToFileIfPossible(DataSpacesFileObject fo) throws URISyntaxException,
