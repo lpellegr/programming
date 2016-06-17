@@ -118,15 +118,17 @@ public class VFSNodeScratchSpaceImpl implements NodeScratchSpace {
         public void close() throws FileSystemException {
             logger.debug("Closing application scratch space");
             try {
+                final int filesNumber = spaceFile.delete(Selectors.SELECT_ALL);
+                logger.debug("Deleted " + filesNumber + " files in scratch application directory");
+            } catch (org.apache.commons.vfs2.FileSystemException e) {
+                logger.warn("Could not delete " + spaceFile, e);
+            } finally {
                 try {
-                    final int filesNumber = spaceFile.delete(Selectors.SELECT_ALL);
-                    logger.debug("Deleted " + filesNumber + " files in scratch application directory");
-                } finally {
                     // just a hint
                     spaceFile.close();
+                } catch (org.apache.commons.vfs2.FileSystemException e) {
+                    throw new FileSystemException(e);
                 }
-            } catch (org.apache.commons.vfs2.FileSystemException e) {
-                throw new FileSystemException(e);
             }
             logger.debug("Closed application scratch space");
         }
@@ -299,8 +301,19 @@ public class VFSNodeScratchSpaceImpl implements NodeScratchSpace {
             throws org.apache.commons.vfs2.FileSystemException {
 
         FileObject f = parent.resolveFile(path);
-        f.delete(Selectors.EXCLUDE_SELF);
-        f.createFolder();
+
+        try {
+            f.delete(Selectors.EXCLUDE_SELF);
+        } catch (org.apache.commons.vfs2.FileSystemException e) {
+            logger.warn("Could not delete folder " + f, e);
+        }
+
+        try {
+            f.createFolder();
+        } catch (org.apache.commons.vfs2.FileSystemException e) {
+            logger.warn("Could not create folder " + f, e);
+        }
+
         return f;
     }
 
